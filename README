@@ -1,0 +1,12 @@
+# CREATE TABLE
+
+    use goexpert;
+    CREATE TABLE cotations(cotation varchar(10));
+
+# TO RUN SERVER
+
+    - go run ./server/server.go
+
+# TO RUN CLIENT
+
+    - go run ./client/client.go
