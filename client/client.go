@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -52,9 +53,17 @@ func main() {
 		panic(err)
 	}
 
+	createFile(cotation)
+
 }
 
 func insert(db *sql.DB, cotation *Cotation) error {
+
+	_, err := db.Exec("CREATE TABLE IF NOT EXISTS cotations (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, cotation TEXT NOT NULL)")
+	if err != nil {
+		panic(err)
+	}
+
 	stmt, err := db.Prepare("insert into cotations(cotation) values(?)")
 	if err != nil {
 		return err
@@ -65,4 +74,17 @@ func insert(db *sql.DB, cotation *Cotation) error {
 		return err
 	}
 	return nil
+}
+
+func createFile(cotation *Cotation) {
+
+	f, err := os.Create("cotacao.txt")
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = f.Write([]byte("Dólar:" + cotation.cotation))
+	if err != nil {
+		panic(err)
+	}
 }
