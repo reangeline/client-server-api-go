@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"io"
 	"net/http"
 	"os"
@@ -36,54 +35,23 @@ func main() {
 	}
 	defer res.Body.Close()
 
-	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/goexpert")
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		panic(err)
 	}
 
-	cotation := NewCotation(string(body))
-	err = insert(db, cotation)
-	if err != nil {
-		panic(err)
-	}
-
-	createFile(cotation)
+	createFile(string(body))
 
 }
 
-func insert(db *sql.DB, cotation *Cotation) error {
-
-	_, err := db.Exec("CREATE TABLE IF NOT EXISTS cotations (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, cotation TEXT NOT NULL)")
-	if err != nil {
-		panic(err)
-	}
-
-	stmt, err := db.Prepare("insert into cotations(cotation) values(?)")
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-	_, err = stmt.Exec(cotation.cotation)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func createFile(cotation *Cotation) {
+func createFile(cotation string) {
 
 	f, err := os.Create("cotacao.txt")
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = f.Write([]byte("Dólar:" + cotation.cotation))
+	_, err = f.Write([]byte("Dólar:" + cotation))
 	if err != nil {
 		panic(err)
 	}

@@ -1,10 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type Dolar struct {
@@ -21,6 +24,16 @@ type Dolar struct {
 		Timestamp  string `json:"timestamp"`
 		CreateDate string `json:"create_date"`
 	} `json:"USDBRL"`
+}
+
+type Cotation struct {
+	cotation string
+}
+
+func NewCotation(cotation string) *Cotation {
+	return &Cotation{
+		cotation: cotation,
+	}
 }
 
 func main() {
@@ -48,6 +61,37 @@ func GetApi(w http.ResponseWriter, r *http.Request) {
 		panic(error)
 	}
 
+	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/goexpert")
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	cotation := NewCotation(string(body))
+	err = insert(db, cotation)
+	if err != nil {
+		panic(err)
+	}
+
 	json.NewEncoder(w).Encode(&d.Usdbrl.Bid)
 
+}
+
+func insert(db *sql.DB, cotation *Cotation) error {
+
+	_, err := db.Exec("CREATE TABLE IF NOT EXISTS cotations (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, cotation TEXT NOT NULL)")
+	if err != nil {
+		panic(err)
+	}
+
+	stmt, err := db.Prepare("insert into cotations(cotation) values(?)")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(cotation.cotation)
+	if err != nil {
+		return err
+	}
+	return nil
 }
